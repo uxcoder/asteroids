@@ -14,6 +14,7 @@ static NODE *create_node(void *data)
     	if (node) {
 		node->data = data;
 		node->next = NULL;
+		node->prev = NULL;
     	}
 	return node;
 }
@@ -60,11 +61,11 @@ void append_tolist(LLIST *list, void *data)
 		list->tail = node;
     	} else {
 		list->tail->next = node;
+		node->prev = list->tail;
 		list->tail = node;
     	}
     	list->count++;
 }
-
 
 
 

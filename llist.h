@@ -9,6 +9,7 @@
  struct NODE {
  	void *data;
  	struct NODE *next;
+ 	struct NODE *prev;
  };
 
  typedef struct NODE NODE;
