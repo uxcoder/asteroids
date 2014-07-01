@@ -126,6 +126,19 @@ void init(void)
 	}
 
 
+	// remove_item(list, 1);
+
+	game.running = true;
+	game.last_update = glutGet(GLUT_ELAPSED_TIME);
+
+}
+
+
+void spawn_bullet(int id)
+{
+    NODE *node = list->head;
+    gameobj *ship = (gameobj *)(node->data);
+
 	gameobj *b = calloc(1, sizeof(gameobj));
 	b->id = 100;
 	b->x = 20 * cos(ship->angle * M_PI/180.0) + ship->x;
@@ -138,14 +151,8 @@ void init(void)
 	b->tick = &tick_bullet;
 	append_tolist(list, b);
 
-	// remove_item(list, 1);
-
-	game.running = true;
-	game.last_update = glutGet(GLUT_ELAPSED_TIME);
 
 }
-
-
 void render(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -183,7 +190,7 @@ void draw_asteroid(gameobj *o)
 	glColor3f(0.4, 0.4, 0.4);
 	glBegin(GL_POLYGON);
 	for (int i = 0; i < 5; i++)
-		glVertex2f(o->size * cos(2 * i * M_PI/5),  o->size *sin(2 * i * M_PI/5));
+		glVertex2f(o->size * cos(2 * i * M_PI/5),  o->size * sin(2 * i * M_PI/5));
 	glEnd();
 	glPopMatrix();
 }
@@ -280,8 +287,10 @@ void speckey_up(int key, int x, int y)
 
 void key_down(unsigned char key, int x, int y)
 {
-	if (key == SPACEBAR)
+	if (key == SPACEBAR) {
 		keystate[FIRE] = 1;
+        spawn_bullet(100);
+    }
 	else if (key == ESC)
 		exit(0);
 }
