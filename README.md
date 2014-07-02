@@ -1,1 +1,1 @@
-A asteroids clone for education purposes.
+An asteroids clone for education purposes.
