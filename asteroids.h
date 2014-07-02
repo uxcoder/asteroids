@@ -14,6 +14,7 @@ typedef struct gameobj{
 	float vx, vy;
 	float angle;
 	float size;
+	double lifetime;
 	void (*draw)(struct gameobj *);
 	void (*tick)(struct gameobj *);
 } gameobj;

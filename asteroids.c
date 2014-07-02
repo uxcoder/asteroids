@@ -83,9 +83,27 @@ void remove_item(LLIST *list, int id)
 			list->count--;
 		}
 	}
-
 }
 
+
+void remove_node(LLIST *list, NODE *node)
+{
+	if (node == list->tail && node == list->head) {
+		list->head = NULL;
+		list->tail = NULL;
+	}  else if (node == list->head) {
+		list->head = node->next;
+		list->head->prev = NULL;
+	} else if (node == list->tail) {
+		list->tail = node->prev;
+		list->tail->next = NULL;
+	} else {
+		node->prev->next = node->next;
+		node->next->prev = node->prev;
+	}
+	free(node);
+	list->count--;
+}
 
 
 void init(void)
@@ -95,7 +113,7 @@ void init(void)
 	glEnable(GL_MULTISAMPLE);
 	glPointSize(1.0);
 
-
+	srandomdev();
 
 	list = create_list();
 
@@ -108,17 +126,17 @@ void init(void)
 	ship->tick = &tick_ship;
 
 	append_tolist(list, ship);
-	int max_asteroids = 10;
+	int max_asteroids = 1;
 	for (int i = 0; i < max_asteroids; i++) {
 		gameobj *a = calloc(1, sizeof(gameobj));
 		float angle = random()%360/M_PI;
-		a->id = i + 1;
+		a->id = 1;
 		a->x = random() % WIDTH;
 		a->y = random() % HEIGHT;
 		a->vx = cos(angle);
 		a->vy = sin(angle);
 		a->angle = angle * M_PI;
-		a->size = random()%30 + 15;
+		a->size = 64;//random()%30 + 15;
 		a->draw = &draw_asteroid;
 		a->tick = &tick_asteroid;
 		append_tolist(list, a);
@@ -136,31 +154,35 @@ void init(void)
 
 void spawn_bullet(int id)
 {
-    NODE *node = list->head;
-    gameobj *ship = (gameobj *)(node->data);
+	NODE *node = list->head;
+	gameobj *ship = (gameobj *)(node->data);
 
 	gameobj *b = calloc(1, sizeof(gameobj));
-	b->id = 100;
+	b->id = -1;
 	b->x = 20 * cos(ship->angle * M_PI/180.0) + ship->x;
 	b->y = 20 * sin(ship->angle * M_PI/180.0) + ship->y;
 	b->vx = cos(ship->angle * M_PI/180.0);
 	b->vy = sin(ship->angle * M_PI/180.0);
-	// a->angle = angle*M_PI;
-	// a->size = random()%30 + 15;
+	b->lifetime = 100;
 	b->draw = &draw_bullet;
 	b->tick = &tick_bullet;
 	append_tolist(list, b);
-
-
 }
+
+
 void render(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	for (NODE *node = list->head; node != NULL; node = node->next) {
 		gameobj *o = (gameobj *)(node->data);
-		o->tick(o);
-		o->draw(o);
+		if (o->lifetime < 0 && o->id == -1)
+			remove_node(list, node);
+		else {
+			o->tick(o);
+			o->draw(o);
+		}
+
 	}
 	glutSwapBuffers();
 }
@@ -199,7 +221,6 @@ void draw_asteroid(gameobj *o)
 void draw_bullet(gameobj *o)
 {
 	glPushMatrix();
-	glPointSize(3.0);
 	glTranslatef(o->x, o->y, 0);
 	glColor3f(1.0, 1.0, 1.0);
 	glBegin(GL_POINTS);
@@ -215,6 +236,8 @@ void tick_ship(gameobj *o)
 		o->angle += 0.5 * DELTA;
 	if (keystate[RIGHT])
 		o->angle -= 0.5 * DELTA;
+	if (keystate[FIRE])
+		spawn_bullet(-1);
 }
 
 
@@ -240,11 +263,29 @@ void tick_asteroid(gameobj *o)
 }
 
 
+float dist(gameobj *a, gameobj *b)
+{
+	return (a->x - b->x) * (a->x - b->x) - (a->y - b->y) * (a->y - b->y);
+}
+
+
 void tick_bullet(gameobj *o)
 {
-	o->x += o->vx * DELTA / 4.0f, WIDTH;
-	o->y += o->vy * DELTA / 4.0f, HEIGHT;
+	o->x += o->vx * DELTA / 3.0f, WIDTH;
+	o->y += o->vy * DELTA / 3.0f, HEIGHT;
+
+		
+	o->lifetime--;
+
+	
+//	for (NODE *node = list->head; node != NULL; node = node->next) {
+//		gameobj *a = (gameobj *)(node->data);
+//		if (a->id == 1 && dist(a, o) < sqrt(a->size)) {
+//			remove_node(list, node);	
+//		}
+//	}
 }
+
 
 
 void speckey_down(int key, int x, int y)
@@ -289,8 +330,7 @@ void key_down(unsigned char key, int x, int y)
 {
 	if (key == SPACEBAR) {
 		keystate[FIRE] = 1;
-        spawn_bullet(100);
-    }
+	}
 	else if (key == ESC)
 		exit(0);
 }
